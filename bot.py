@@ -48,7 +48,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     photo = update.message.photo[-1]
     file = await photo.get_file()
     image_stream = io.BytesIO()
-    await file.download(out=image_stream)
+    await file.download_to_memory(out=image_stream)
     image_stream.seek(0)
 
     # Открываем изображение и выполняем преобразования
