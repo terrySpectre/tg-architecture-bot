@@ -16,7 +16,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # === Создание и загрузка модели без предобученных весов ===
 model = models.efficientnet_b0(weights=None)  # НЕ загружаем pretrained
 model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, NUM_CLASSES)
-model.load_state_dict(torch.load(MODEL_PATH, map_location=device))  # Загружаем на правильное устройство
+model.load_state_dict(torch.load(MODEL_PATH, map_location=device), strict=False)  # Загружаем на правильное устройство
 model = model.to(device)
 model.eval()
 
