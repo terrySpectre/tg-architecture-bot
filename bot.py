@@ -4,8 +4,7 @@ from PIL import Image
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 import io
-import timm
-
+import torchvision.models as models
 
 # === Настройки модели ===
 NUM_CLASSES = 25
@@ -15,11 +14,14 @@ MODEL_PATH = "efficientnet_finetuned.pth"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # === Создание и загрузка модели без предобученных весов ===
-model = timm.create_model('efficientnet_b0', pretrained=False, num_classes=NUM_CLASSES)
-model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
-model = model.to(device)
-model.eval()
-model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, NUM_CLASSES)
+model = models.efficientnet_b0(weights=None)  # НЕ загружаем pretrained
+
+# Заменяем последний слой классификатора
+model.classifier = torch.nn.Sequential(
+    torch.nn.Dropout(p=0.2),
+    torch.nn.Linear(model.classifier[1].in_features, NUM_CLASSES)
+)
+
 model.load_state_dict(torch.load(MODEL_PATH, map_location=device), strict=False)  # Загружаем на правильное устройство
 model = model.to(device)
 model.eval()
@@ -80,4 +82,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
