@@ -3,4 +3,3 @@ torch
 torchvision
 Pillow
 urllib3
-efficientnet_pytorch
