@@ -10,16 +10,21 @@ import torchvision.models as models
 NUM_CLASSES = 25
 MODEL_PATH = "efficientnet_finetuned.pth"
 
+# === Проверка устройства ===
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # === Создание и загрузка модели без предобученных весов ===
 model = models.efficientnet_b0(weights=None)  # НЕ загружаем pretrained
 model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, NUM_CLASSES)
-model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device("cpu")))
+model.load_state_dict(torch.load(MODEL_PATH, map_location=device))  # Загружаем на правильное устройство
+model = model.to(device)
 model.eval()
 
 # === Преобразования ===
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Нормализация для EfficientNet
 ])
 
 # === Названия классов ===
@@ -46,19 +51,22 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await file.download(out=image_stream)
     image_stream.seek(0)
 
+    # Открываем изображение и выполняем преобразования
     image = Image.open(image_stream).convert('RGB')
-    input_tensor = transform(image).unsqueeze(0)
+    input_tensor = transform(image).unsqueeze(0).to(device)  # Преобразуем изображение и переносим на устройство
 
+    # Получаем предсказание
     with torch.no_grad():
         outputs = model(input_tensor)
         _, predicted = torch.max(outputs, 1)
 
+    # Получаем название класса
     predicted_class = idx_to_class.get(predicted.item(), "Неизвестно")
     await update.message.reply_text(f"📸 Предсказанный архитектурный стиль: {predicted_class}")
 
 # === Запуск ===
 def main():
-    TOKEN = "7854664139:AAGjNjdmjZPGv6XbqqNnA07x-6aBVfBa9UY"
+    TOKEN = "7854664139:AAGjNjdmjZPGv6XbqqNnA07x-6aBVfBa9UY"  # Ваш токен
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -68,3 +76,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
