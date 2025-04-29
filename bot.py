@@ -1,16 +1,17 @@
 import torch
-from torchvision import models, transforms
+from torchvision import transforms
 from PIL import Image
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 import io
+import torchvision.models as models
 
 # === Настройки модели ===
 NUM_CLASSES = 25
 MODEL_PATH = "efficientnet_finetuned.pth"
 
-# === Загрузка модели ===
-model = models.efficientnet_b0(weights=None)
+# === Создание и загрузка модели без предобученных весов ===
+model = models.efficientnet_b0(weights=None)  # НЕ загружаем pretrained
 model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, NUM_CLASSES)
 model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device("cpu")))
 model.eval()
