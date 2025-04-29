@@ -3,3 +3,4 @@ torch
 torchvision
 Pillow
 urllib3
+timm
