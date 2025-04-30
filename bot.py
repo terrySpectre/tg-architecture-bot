@@ -1,10 +1,11 @@
 import torch
+import torch.nn as nn
+import timm  # используем ту же библиотеку, что и при обучении
 from torchvision import transforms
 from PIL import Image
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 import io
-import torchvision.models as models
 
 # === Настройки модели ===
 NUM_CLASSES = 25
@@ -13,16 +14,9 @@ MODEL_PATH = "efficientnet_finetuned.pth"
 # === Проверка устройства ===
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# === Создание и загрузка модели без предобученных весов ===
-model = models.efficientnet_b0(weights=None)  # НЕ загружаем pretrained
-
-# Заменяем последний слой классификатора
-model.classifier = torch.nn.Sequential(
-    torch.nn.Dropout(p=0.2),
-    torch.nn.Linear(model.classifier[1].in_features, NUM_CLASSES)
-)
-
-model.load_state_dict(torch.load(MODEL_PATH, map_location=device), strict=False)  # Загружаем на правильное устройство
+# === Загрузка модели через timm ===
+model = timm.create_model('efficientnet_b0', pretrained=False, num_classes=NUM_CLASSES)
+model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
 model = model.to(device)
 model.eval()
 
@@ -30,7 +24,7 @@ model.eval()
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Нормализация для EfficientNet
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
 # === Названия классов ===
@@ -57,22 +51,19 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await file.download_to_memory(out=image_stream)
     image_stream.seek(0)
 
-    # Открываем изображение и выполняем преобразования
     image = Image.open(image_stream).convert('RGB')
-    input_tensor = transform(image).unsqueeze(0).to(device)  # Преобразуем изображение и переносим на устройство
+    input_tensor = transform(image).unsqueeze(0).to(device)
 
-    # Получаем предсказание
     with torch.no_grad():
         outputs = model(input_tensor)
         _, predicted = torch.max(outputs, 1)
 
-    # Получаем название класса
     predicted_class = idx_to_class.get(predicted.item(), "Неизвестно")
     await update.message.reply_text(f"📸 Предсказанный архитектурный стиль: {predicted_class}")
 
 # === Запуск ===
 def main():
-    TOKEN = "7854664139:AAGjNjdmjZPGv6XbqqNnA07x-6aBVfBa9UY"  # Ваш токен
+    TOKEN = "7854664139:AAGjNjdmjZPGv6XbqqNnA07x-6aBVfBa9UY"
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
