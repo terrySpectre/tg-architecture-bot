@@ -63,7 +63,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # === Запуск ===
 def main():
-    TOKEN = "7854664139:AAGjNjdmjZPGv6XbqqNnA07x-6aBVfBa9UY"
+    TOKEN = "7854664139:AAFK2DtlUgK8jO1sg7wyvPA8mtEghucJDSA"
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
