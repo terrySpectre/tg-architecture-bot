@@ -1,6 +1,6 @@
 python-telegram-bot==20.7
-torch==2.0.1+cpu
-torchvision==0.15.2+cpu
+torch==2.5.1+cpu
+torchvision==0.18.1+cpu
 Pillow
 urllib3
 timm
