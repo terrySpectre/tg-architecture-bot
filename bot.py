@@ -8,11 +8,14 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 import io
 import os
 from dotenv import load_dotenv
+import gdown
 
 
 # === Настройки модели ===
 NUM_CLASSES = 25
 MODEL_PATH = "efficientnet_finetuned.pth"
+if not os.path.exists(MODEL_PATH):
+    gdown.download("https://drive.google.com/file/d/18WJGadkfgl6xBblvrKDDW9-yk1n20S8D/view?usp=drive_link", MODEL_PATH, quiet=False)
 
 # === Проверка устройства ===
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -69,7 +72,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     load_dotenv()
     TOKEN = os.getenv("TELEGRAM_TOKEN")
-    
+
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
