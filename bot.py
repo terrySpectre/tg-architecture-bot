@@ -6,6 +6,9 @@ from PIL import Image
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 import io
+import os
+from dotenv import load_dotenv
+
 
 # === Настройки модели ===
 NUM_CLASSES = 25
@@ -61,9 +64,12 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     predicted_class = idx_to_class.get(predicted.item(), "Неизвестно")
     await update.message.reply_text(f"📸 Предсказанный архитектурный стиль: {predicted_class}")
 
+
 # === Запуск ===
 def main():
-    TOKEN = "7854664139:AAFK2DtlUgK8jO1sg7wyvPA8mtEghucJDSA"
+    load_dotenv()
+    TOKEN = os.getenv("TELEGRAM_TOKEN")
+    
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
